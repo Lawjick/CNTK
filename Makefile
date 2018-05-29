@@ -1566,13 +1566,28 @@ endif
 csharp: $(CSHARP_LIBS)
 	@echo $(SEPARATOR)
 	@echo creating $@ for $(ARCH) with build type $(CSHARP_BUILDTYPE)
+	mkdir -p bindings/csharp/Swig/build/Linux/$(CSHARP_BUILDTYPE)
+	cd bindings/csharp/Swig/build/Linux/$(CSHARP_BUILDTYPE) && \
+		cmake ../../.. -DCNTK_VERSION=$(BUILD_VERSION) -DCMAKE_BUILD_TYPE=$(CSHARP_BUILDTYPE) && \
+		make
 	mkdir -p bindings/csharp/CNTKLibraryManagedDll/build/Linux/$(CSHARP_BUILDTYPE)
 	cd bindings/csharp/CNTKLibraryManagedDll/build/Linux/$(CSHARP_BUILDTYPE) && \
 		cmake ../../.. -DCNTK_VERSION=$(BUILD_VERSION) -DCMAKE_BUILD_TYPE=$(CSHARP_BUILDTYPE) && \
 		make
 	cp --recursive bindings/csharp/CNTKLibraryManagedDll/build/Linux/$(CSHARP_BUILDTYPE)/AnyCPU/$(CSHARP_BUILDTYPE)/* $(LIBDIR)
-	
+
 ALL += csharp
+	
+# Note that CMakeLists.txt has not been created for this project yet. The paths created here are really ugly.
+V2LibraryCSTests.dll: csharp
+	@echo $(SEPARATOR)
+	@echo creating $@ for $(ARCH) with build type $(CSHARP_BUILDTYPE)
+	cd Tests/UnitTests/V2LibraryCSTests && \
+		mkdir -p build/Linux/$(CSHARP_BUILDTYPE) && \
+		dotnet build /p:OutDirPrefix=build/Linux/$(CSHARP_BUILDTYPE) /p:PlatformName=Linux -c $(CSHARP_BUILDTYPE)
+	cp $(LIBDIR)/*.so Tests/UnitTests/V2LibraryCSTests/build/Linux/$(CSHARP_BUILDTYPE)/AnyCPU/$(CSHARP_BUILDTYPE)
+	
+ALL += V2LibraryCSTests.dll
 
 endif
 

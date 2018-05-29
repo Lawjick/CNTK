@@ -1,8 +1,31 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\..\..\CNTK.Common.props" />
-  
+ 
   <PropertyGroup>
-    <OutputPathPrefix Condition="'$(OutputPathPrefix)' == ''">..\..\..</OutputPathPrefix>
+    <OutDirPrefix Condition="'$(OutDirPrefix)' == ''">..\..\..</OutDirPrefix>
+	
+	<!-- 
+	This is tricky. The Swig code generated has 4 variations: Windows Debug, Windows Release, Linux Debug, and Linux Release.
+	These variations are necessary, as the swig-generated code pinvokes into Cntk.Core.CSBinding-<version>[d].[dll|so] as part of
+	an attribute, which can't be configured at runtime. So, what we are doing here is generating a cross-platform binary tightly 
+	coupled with a platform-specific binary. 
+	
+	To support these different variations, we need to include different generated files which is a fairly exotic scenario. 
+	We use the property 'PlatformName' to differentiate between Linux and Windows. Ideally, this would be set before the build,
+	but that goes against standard operating procedure on Window where the expectation is that a project is opened in Visual
+	Studio and then compiled. This is more acceptable in the Linux world, where a "configuration" step is expected to come before
+	builds.
+	
+	So, set the default value for 'PlatformName' to Windows to support VisualStudio out of the box. On Linux, the expectation will
+	be that PlatformName is set to Linux as part of any msbuild invocation. Unfortunately, there isn't a good way to validate this 
+	on Linux; if someone forgets to provide the Linux platform name during msbuild, the build will succeed but produce a binary that
+	will throw an exception during any method invocation due to an inability to find Cntk.Core.CSBinding-<version>[d].dll (since the
+	.so variation will be installed).
+	
+	Was:
+		<PlatformName Condition="'$(PlatformName)' == ''">__This_Value_Must_Be_Set_To_Windows_Or_Linux__</PlatformName>
+	-->
+	<PlatformName Condition="'$(PlatformName)' == ''">Windows</PlatformName>
   </PropertyGroup>
   
   <PropertyGroup>
@@ -15,8 +38,7 @@
     <WarningsAsErrors />
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <RootNamespace>CNTK</RootNamespace>
-    <OutputPath>$(OutputPathPrefix)\$(Platform)\$(Configuration)\netstandard2.0\</OutputPath>
-    <OutDir>$(OutputPathPrefix)\$(Platform)\$(Configuration)</OutDir>
+    <OutDir>$(OutDirPrefix)\$(Platform)\$(Configuration)</OutDir>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <Copyright>Copyright © 2016-$([System.DateTime]::Now.ToString(`yy`))</Copyright>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -25,6 +47,7 @@
     <Product>Cntk.Core.Managed</Product>
     <Version>$(CntkVersion)</Version>
     <PlatformTarget>x64</PlatformTarget>
+	<DebugType>portable</DebugType>
      
     <PackageId>Cntk.Core.Managed</PackageId>
     <PackageId Condition="'$(CntkComponentSuffix)'!=''">Cntk.Core.Managed-$(CntkComponentSuffix)</PackageId>
@@ -48,87 +71,87 @@
     <Compile Include="ShimApiClasses\TrainerShim.cs" />
     <Compile Include="ShimApiClasses\ValueShim.cs" />
     <Compile Include="ShimApiClasses\VariableShim.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\AdditionalLearningOptions.cs" Link="Generated\AdditionalLearningOptions.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\Axis.cs" Link="Generated\Axis.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\AxisVector.cs" Link="Generated\AxisVector.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\BoolVector.cs" Link="Generated\BoolVector.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\CharVector.cs" Link="Generated\CharVector.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\CNTKDictionary.cs" Link="Generated\CNTKDictionary.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\CNTKLib.cs" Link="Generated\CNTKLib.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\CNTKLibPINVOKE.cs" Link="Generated\CNTKLibPINVOKE.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\Constant.cs" Link="Generated\Constant.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\ConstantVector.cs" Link="Generated\ConstantVector.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\DataType.cs" Link="Generated\DataType.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\DataUnit.cs" Link="Generated\DataUnit.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\DeviceDescriptor.cs" Link="Generated\DeviceDescriptor.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\DeviceDescriptorVector.cs" Link="Generated\DeviceDescriptorVector.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\DeviceKind.cs" Link="Generated\DeviceKind.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\DictionaryValue.cs" Link="Generated\DictionaryValue.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\DictionaryVector.cs" Link="Generated\DictionaryVector.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\DoubleVector.cs" Link="Generated\DoubleVector.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\DoubleVectorVector.cs" Link="Generated\DoubleVectorVector.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\Evaluator.cs" Link="Generated\Evaluator.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\float16.cs" Link="Generated\float16.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\FloatVector.cs" Link="Generated\FloatVector.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\FloatVectorVector.cs" Link="Generated\FloatVectorVector.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\Function.cs" Link="Generated\Function.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\FunctionPtrVector.cs" Link="Generated\FunctionPtrVector.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\HTKFeatureConfiguration.cs" Link="Generated\HTKFeatureConfiguration.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\HTKFeatureConfigurationVector.cs" Link="Generated\HTKFeatureConfigurationVector.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\IntVector.cs" Link="Generated\IntVector.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\Learner.cs" Link="Generated\Learner.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\LearnerVector.cs" Link="Generated\LearnerVector.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\MaskKind.cs" Link="Generated\MaskKind.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\MinibatchData.cs" Link="Generated\MinibatchData.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\MinibatchInfo.cs" Link="Generated\MinibatchInfo.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\MinibatchSource.cs" Link="Generated\MinibatchSource.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\MinibatchSourceConfig.cs" Link="Generated\MinibatchSourceConfig.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\ModelFormat.cs" Link="Generated\ModelFormat.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\NDArrayView.cs" Link="Generated\NDArrayView.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\NDArrayViewPtrVector.cs" Link="Generated\NDArrayViewPtrVector.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\NDMask.cs" Link="Generated\NDMask.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\NDShape.cs" Link="Generated\NDShape.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\PaddingMode.cs" Link="Generated\PaddingMode.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\PairDoubleDouble.cs" Link="Generated\PairDoubleDouble.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\PairFloatFloat.cs" Link="Generated\PairFloatFloat.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\PairIntInt.cs" Link="Generated\PairIntInt.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\PairNDArrayViewPtrNDArrayViewPtr.cs" Link="Generated\PairNDArrayViewPtrNDArrayViewPtr.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\PairSizeTDouble.cs" Link="Generated\PairSizeTDouble.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\PairSizeTInt.cs" Link="Generated\PairSizeTInt.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\PairSizeTSizeT.cs" Link="Generated\PairSizeTSizeT.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\Parameter.cs" Link="Generated\Parameter.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\ParameterCloningMethod.cs" Link="Generated\ParameterCloningMethod.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\ParameterVector.cs" Link="Generated\ParameterVector.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\PoolingType.cs" Link="Generated\PoolingType.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\ProgressWriter.cs" Link="Generated\ProgressWriter.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\ProgressWriterVector.cs" Link="Generated\ProgressWriterVector.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\SizeTVector.cs" Link="Generated\SizeTVector.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\SizeTVectorVector.cs" Link="Generated\SizeTVectorVector.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\StorageFormat.cs" Link="Generated\StorageFormat.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\StreamConfiguration.cs" Link="Generated\StreamConfiguration.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\StreamConfigurationVector.cs" Link="Generated\StreamConfigurationVector.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\StreamInformation.cs" Link="Generated\StreamInformation.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\StringVector.cs" Link="Generated\StringVector.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\SWIGTYPE_p_int8_t.cs" Link="Generated\SWIGTYPE_p_int8_t.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\SWIGTYPE_p_void.cs" Link="Generated\SWIGTYPE_p_void.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\TraceLevel.cs" Link="Generated\TraceLevel.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\Trainer.cs" Link="Generated\Trainer.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\TrainingParameterScheduleDouble.cs" Link="Generated\TrainingParameterScheduleDouble.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\UnorderedMapParameterNDArrayViewPtr.cs" Link="Generated\UnorderedMapParameterNDArrayViewPtr.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\UnorderedMapStreamInformationMinibatchData.cs" Link="Generated\UnorderedMapStreamInformationMinibatchData.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\UnorderedMapStreamInformationPairNDArrayViewPtrNDArrayViewPtr.cs" Link="Generated\UnorderedMapStreamInformationPairNDArrayViewPtrNDArrayViewPtr.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\UnorderedMapStringDictionaryValue.cs" Link="Generated\UnorderedMapStringDictionaryValue.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\UnorderedMapVariableMinibatchData.cs" Link="Generated\UnorderedMapVariableMinibatchData.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\UnorderedMapVariableValuePtr.cs" Link="Generated\UnorderedMapVariableValuePtr.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\UnorderedMapVariableVariable.cs" Link="Generated\UnorderedMapVariableVariable.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\UnsignedCharVector.cs" Link="Generated\UnsignedCharVector.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\Value.cs" Link="Generated\Value.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\Variable.cs" Link="Generated\Variable.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\VariableKind.cs" Link="Generated\VariableKind.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\VariablePair.cs" Link="Generated\VariablePair.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\VariablePairVector.cs" Link="Generated\VariablePairVectorcs." />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\VariableVector.cs" Link="Generated\VariableVector.cs" />
-    <Compile Include="..\Swig\Generated\Windows\$(FlavorName)\VectorPairSizeTDouble.cs" Link="Generated\VectorPairSizeTDouble.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\AdditionalLearningOptions.cs" Link="Generated\AdditionalLearningOptions.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\Axis.cs" Link="Generated\Axis.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\AxisVector.cs" Link="Generated\AxisVector.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\BoolVector.cs" Link="Generated\BoolVector.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\CharVector.cs" Link="Generated\CharVector.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\CNTKDictionary.cs" Link="Generated\CNTKDictionary.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\CNTKLib.cs" Link="Generated\CNTKLib.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\CNTKLibPINVOKE.cs" Link="Generated\CNTKLibPINVOKE.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\Constant.cs" Link="Generated\Constant.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\ConstantVector.cs" Link="Generated\ConstantVector.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\DataType.cs" Link="Generated\DataType.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\DataUnit.cs" Link="Generated\DataUnit.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\DeviceDescriptor.cs" Link="Generated\DeviceDescriptor.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\DeviceDescriptorVector.cs" Link="Generated\DeviceDescriptorVector.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\DeviceKind.cs" Link="Generated\DeviceKind.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\DictionaryValue.cs" Link="Generated\DictionaryValue.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\DictionaryVector.cs" Link="Generated\DictionaryVector.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\DoubleVector.cs" Link="Generated\DoubleVector.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\DoubleVectorVector.cs" Link="Generated\DoubleVectorVector.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\Evaluator.cs" Link="Generated\Evaluator.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\float16.cs" Link="Generated\float16.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\FloatVector.cs" Link="Generated\FloatVector.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\FloatVectorVector.cs" Link="Generated\FloatVectorVector.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\Function.cs" Link="Generated\Function.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\FunctionPtrVector.cs" Link="Generated\FunctionPtrVector.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\HTKFeatureConfiguration.cs" Link="Generated\HTKFeatureConfiguration.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\HTKFeatureConfigurationVector.cs" Link="Generated\HTKFeatureConfigurationVector.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\IntVector.cs" Link="Generated\IntVector.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\Learner.cs" Link="Generated\Learner.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\LearnerVector.cs" Link="Generated\LearnerVector.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\MaskKind.cs" Link="Generated\MaskKind.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\MinibatchData.cs" Link="Generated\MinibatchData.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\MinibatchInfo.cs" Link="Generated\MinibatchInfo.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\MinibatchSource.cs" Link="Generated\MinibatchSource.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\MinibatchSourceConfig.cs" Link="Generated\MinibatchSourceConfig.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\ModelFormat.cs" Link="Generated\ModelFormat.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\NDArrayView.cs" Link="Generated\NDArrayView.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\NDArrayViewPtrVector.cs" Link="Generated\NDArrayViewPtrVector.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\NDMask.cs" Link="Generated\NDMask.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\NDShape.cs" Link="Generated\NDShape.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\PaddingMode.cs" Link="Generated\PaddingMode.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\PairDoubleDouble.cs" Link="Generated\PairDoubleDouble.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\PairFloatFloat.cs" Link="Generated\PairFloatFloat.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\PairIntInt.cs" Link="Generated\PairIntInt.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\PairNDArrayViewPtrNDArrayViewPtr.cs" Link="Generated\PairNDArrayViewPtrNDArrayViewPtr.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\PairSizeTDouble.cs" Link="Generated\PairSizeTDouble.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\PairSizeTInt.cs" Link="Generated\PairSizeTInt.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\PairSizeTSizeT.cs" Link="Generated\PairSizeTSizeT.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\Parameter.cs" Link="Generated\Parameter.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\ParameterCloningMethod.cs" Link="Generated\ParameterCloningMethod.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\ParameterVector.cs" Link="Generated\ParameterVector.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\PoolingType.cs" Link="Generated\PoolingType.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\ProgressWriter.cs" Link="Generated\ProgressWriter.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\ProgressWriterVector.cs" Link="Generated\ProgressWriterVector.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\SizeTVector.cs" Link="Generated\SizeTVector.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\SizeTVectorVector.cs" Link="Generated\SizeTVectorVector.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\StorageFormat.cs" Link="Generated\StorageFormat.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\StreamConfiguration.cs" Link="Generated\StreamConfiguration.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\StreamConfigurationVector.cs" Link="Generated\StreamConfigurationVector.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\StreamInformation.cs" Link="Generated\StreamInformation.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\StringVector.cs" Link="Generated\StringVector.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\SWIGTYPE_p_int8_t.cs" Link="Generated\SWIGTYPE_p_int8_t.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\SWIGTYPE_p_void.cs" Link="Generated\SWIGTYPE_p_void.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\TraceLevel.cs" Link="Generated\TraceLevel.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\Trainer.cs" Link="Generated\Trainer.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\TrainingParameterScheduleDouble.cs" Link="Generated\TrainingParameterScheduleDouble.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\UnorderedMapParameterNDArrayViewPtr.cs" Link="Generated\UnorderedMapParameterNDArrayViewPtr.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\UnorderedMapStreamInformationMinibatchData.cs" Link="Generated\UnorderedMapStreamInformationMinibatchData.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\UnorderedMapStreamInformationPairNDArrayViewPtrNDArrayViewPtr.cs" Link="Generated\UnorderedMapStreamInformationPairNDArrayViewPtrNDArrayViewPtr.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\UnorderedMapStringDictionaryValue.cs" Link="Generated\UnorderedMapStringDictionaryValue.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\UnorderedMapVariableMinibatchData.cs" Link="Generated\UnorderedMapVariableMinibatchData.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\UnorderedMapVariableValuePtr.cs" Link="Generated\UnorderedMapVariableValuePtr.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\UnorderedMapVariableVariable.cs" Link="Generated\UnorderedMapVariableVariable.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\UnsignedCharVector.cs" Link="Generated\UnsignedCharVector.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\Value.cs" Link="Generated\Value.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\Variable.cs" Link="Generated\Variable.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\VariableKind.cs" Link="Generated\VariableKind.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\VariablePair.cs" Link="Generated\VariablePair.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\VariablePairVector.cs" Link="Generated\VariablePairVectorcs." />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\VariableVector.cs" Link="Generated\VariableVector.cs" />
+    <Compile Include="..\Swig\Generated\$(PlatformName)\$(FlavorName)\VectorPairSizeTDouble.cs" Link="Generated\VectorPairSizeTDouble.cs" />
     <Compile Include="Utils.cs" />
   </ItemGroup>
 
